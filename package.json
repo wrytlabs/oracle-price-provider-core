@@ -1,5 +1,5 @@
 {
-	"name": "@wrytlabs/template-core",
+	"name": "@wrytlabs/external-strategy-provider",
 	"version": "0.0.1",
 	"private": false,
 	"license": "MIT",
