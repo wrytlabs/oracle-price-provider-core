@@ -42,9 +42,12 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 
 	error NoShares();
 
-	constructor(address _proxy) Ownable(msg.sender) {
+	constructor(address _proxy, uint256 _shares, uint256 _balance) Ownable(msg.sender) {
 		proxy = EACAggregatorProxy(_proxy);
 		shares = new StrategyShares(address(this));
+		shares.increaseShares(msg.sender, _shares);
+		latestEquityBalance = _balance;
+		_update();
 	}
 
 	function decimals() external view override returns (uint8) {
@@ -55,7 +58,7 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 		return 'SyStUSD/USD price oracle';
 	}
 
-	function mint(address to, uint256 amount) external onlyOwner {
+	function increaseShares(address to, uint256 amount) external onlyOwner {
 		shares.increaseShares(to, amount);
 		_update();
 	}

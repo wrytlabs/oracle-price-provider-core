@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
 		settings: {
 			optimizer: {
 				enabled: true,
-				runs: 200,
+				runs: 999999,
 			},
 		},
 	},
@@ -48,7 +48,7 @@ const config: HardhatUserConfig = {
 			url: `https://eth-mainnet.g.alchemy.com/v2/${alchemy}`,
 			chainId: 1,
 			gas: 'auto',
-			gasPrice: 'auto',
+			gasPrice: 400_000_000,
 			accounts: [wallet.privateKey],
 			timeout: 50_000,
 		},
