@@ -1,8 +1,8 @@
 import { buildModule } from '@nomicfoundation/hardhat-ignition/modules';
 import { storeConstructorArgs } from '../../helper/store.args';
-import { args, params } from '../params/Membership'; // <-- check for correct import
+import { args, params } from '../params/SyStUSDStrategyPriceProvider'; // <-- check for correct import
 
-export const NAME: string = 'Membership';
+export const NAME: string = 'SyStUSDStrategyPriceProvider';
 export const MOD: string = NAME + 'Module';
 console.log(NAME);
 
