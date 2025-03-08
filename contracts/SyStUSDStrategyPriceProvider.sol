@@ -36,7 +36,7 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 	EACAggregatorProxy public immutable proxy;
 	StrategyShares public immutable shares;
 
-	uint256 public latestEquityBalance;
+	uint256 public equityBalance;
 
 	event Update(uint256 balance, uint256 shares, uint256 price);
 
@@ -45,10 +45,13 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 	constructor(address _proxy, uint256 _shares, uint256 _balance) Ownable(msg.sender) {
 		proxy = EACAggregatorProxy(_proxy);
 		shares = new StrategyShares(address(this));
+
+		// increaseShares will trigger update event
+		equityBalance = _balance;
 		shares.increaseShares(msg.sender, _shares);
-		latestEquityBalance = _balance;
-		_update();
 	}
+
+	// ---------------------------------------------------------------------------------------
 
 	function decimals() external view override returns (uint8) {
 		return proxy.decimals();
@@ -58,21 +61,35 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 		return 'SyStUSD/USD price oracle';
 	}
 
+	function equityAsset() external pure returns (string memory) {
+		return 'Bitcoin';
+	}
+
+	function equityPrice() external view returns (uint256) {
+		(, int256 answer, , , ) = latestRoundData();
+		return uint256(answer);
+	}
+
+	function equitySymbol() external pure returns (string memory) {
+		return 'BTC/USD';
+	}
+
+	function setEquityBalance(uint256 amount) external onlyOwner {
+		equityBalance = amount;
+		_update();
+	}
+
 	function increaseShares(address to, uint256 amount) external onlyOwner {
 		shares.increaseShares(to, amount);
 		_update();
 	}
 
-	function setEquityBalance(uint256 amount) external onlyOwner {
-		latestEquityBalance = amount;
-		_update();
-	}
-
 	function _update() internal {
 		(, int256 answer, , , ) = latestRoundData();
-		emit Update(latestEquityBalance, shares.totalSupply(), uint256(answer));
+		emit Update(equityBalance, shares.totalSupply(), uint256(answer));
 	}
 
+	// Returns share price by evenly distributing total equity across all shares
 	function latestRoundData()
 		public
 		view
@@ -85,7 +102,7 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 			answer = int256(10 ** proxy.decimals()); // default price at 1.0
 		} else {
 			answer = int256(
-				(latestEquityBalance * uint256(answer) * 1 ether) / (shares.totalSupply() * 10 ** proxy.decimals())
+				(equityBalance * uint256(answer) * 1 ether) / (shares.totalSupply() * 10 ** proxy.decimals())
 			);
 		}
 	}
