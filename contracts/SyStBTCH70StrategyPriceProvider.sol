@@ -6,6 +6,8 @@ import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {AggregatorV3LightInterface} from './interfaces/AggregatorV3LightInterface.sol';
 
+// ---------------------------------------------------------------------------------------
+
 interface EACAggregatorProxy {
 	function decimals() external view returns (uint8);
 
@@ -15,13 +17,15 @@ interface EACAggregatorProxy {
 		returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
 }
 
+// ---------------------------------------------------------------------------------------
+
 contract StrategyShares is ERC20 {
 	address public immutable strategy;
 
 	error NoChange();
 	error NotAllowed();
 
-	constructor(address _strategy) ERC20('Syntatic Staked USD via BTC Futures', 'SyStUSD') {
+	constructor(address _strategy) ERC20('Syntatic Staked BTC Hedged .70', 'SyStBTC-H.70') {
 		strategy = _strategy;
 	}
 
@@ -30,9 +34,17 @@ contract StrategyShares is ERC20 {
 		if (amount == 0) revert NoChange();
 		_mint(to, amount);
 	}
+
+	function decreaseShares(address from, uint256 amount) public {
+		if (msg.sender != address(strategy)) revert NotAllowed();
+		if (amount == 0) revert NoChange();
+		_burn(from, amount);
+	}
 }
 
-contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
+// ---------------------------------------------------------------------------------------
+
+contract SyStBTCH70StrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 	EACAggregatorProxy public immutable proxy;
 	StrategyShares public immutable shares;
 
@@ -42,12 +54,15 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 
 	error NoShares();
 
-	constructor(address _proxy, uint256 _shares, uint256 _balance) Ownable(msg.sender) {
+	constructor(address _proxy, uint256 _balance) Ownable(msg.sender) {
 		proxy = EACAggregatorProxy(_proxy);
 		shares = new StrategyShares(address(this));
 
 		// increaseShares will trigger update event
 		equityBalance = _balance;
+
+		// calc initial shares based on proxy equity price
+		uint256 _shares = (_balance * equityPrice() * 1 ether) / 10 ** (2 * proxy.decimals());
 		shares.increaseShares(msg.sender, _shares);
 	}
 
@@ -58,29 +73,48 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 	}
 
 	function description() external pure override returns (string memory) {
-		return 'SyStUSD/USD price oracle';
+		return 'SyStBTC-H.70/USD price oracle';
 	}
 
 	function equityAsset() external pure returns (string memory) {
 		return 'Bitcoin';
 	}
 
-	function equityPrice() external view returns (uint256) {
-		(, int256 answer, , , ) = proxy.latestRoundData();
-		return uint256(answer);
-	}
-
 	function equitySymbol() external pure returns (string memory) {
 		return 'BTC/USD';
 	}
 
-	function setEquityBalance(uint256 amount) external onlyOwner {
-		equityBalance = amount;
+	function equityPrice() public view returns (uint256) {
+		(, int256 answer, , , ) = proxy.latestRoundData();
+		return uint256(answer);
+	}
+
+	function equityValue() external view returns (uint256) {
+		return (equityBalance * equityPrice()) / 10 ** proxy.decimals();
+	}
+
+	// ---------------------------------------------------------------------------------------
+
+	function setEquityBalance(uint256 _balance) external onlyOwner {
+		equityBalance = _balance;
 		_update();
 	}
 
-	function increaseShares(address to, uint256 amount) external onlyOwner {
-		shares.increaseShares(to, amount);
+	function increaseShares(address to, uint256 _balance, uint256 _amount) external onlyOwner {
+		uint256 _existingSharesRatio = 1 ether - (_amount * 1 ether) / _balance;
+		uint256 _missingShares = shares.totalSupply() * (1 ether / _existingSharesRatio - 1);
+
+		equityBalance = _balance;
+		shares.increaseShares(to, _missingShares);
+		_update();
+	}
+
+	function decreaseShares(uint256 _balance, uint256 _amount) external onlyOwner {
+		uint256 _removalSharesRatio = (_amount * 1 ether) / (_balance + _amount);
+		uint256 _missingShares = (shares.totalSupply() * _removalSharesRatio) / 1 ether;
+
+		equityBalance = _balance;
+		shares.decreaseShares(msg.sender, _missingShares);
 		_update();
 	}
 
@@ -88,6 +122,8 @@ contract SyStUSDStrategyPriceProvider is Ownable, AggregatorV3LightInterface {
 		(, int256 answer, , , ) = latestRoundData();
 		emit Update(equityBalance, shares.totalSupply(), uint256(answer));
 	}
+
+	// ---------------------------------------------------------------------------------------
 
 	// Returns share price by evenly distributing total equity across all shares
 	function latestRoundData()
