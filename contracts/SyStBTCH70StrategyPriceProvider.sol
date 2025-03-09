@@ -25,7 +25,7 @@ contract StrategyShares is ERC20 {
 	error NoChange();
 	error NotAllowed();
 
-	constructor(address _strategy) ERC20('Syntatic Staked BTC Hedged .70', 'SyStBTC-H.70') {
+	constructor(address _strategy) ERC20('Syntatic Staked BTC Hedged .70 Shares', 'SyStBTC-H.70') {
 		strategy = _strategy;
 	}
 
@@ -57,8 +57,6 @@ contract SyStBTCH70StrategyPriceProvider is Ownable, AggregatorV3LightInterface 
 	constructor(address _proxy, uint256 _balance) Ownable(msg.sender) {
 		proxy = EACAggregatorProxy(_proxy);
 		shares = new StrategyShares(address(this));
-
-		// increaseShares will trigger update event
 		equityBalance = _balance;
 
 		// calc initial shares based on proxy equity price
@@ -103,8 +101,8 @@ contract SyStBTCH70StrategyPriceProvider is Ownable, AggregatorV3LightInterface 
 	function increaseShares(address to, uint256 _balance, uint256 _amount) external onlyOwner {
 		uint256 _existingSharesRatio = 1 ether - (_amount * 1 ether) / _balance;
 		uint256 _missingShares = shares.totalSupply() * (1 ether / _existingSharesRatio - 1);
-
 		equityBalance = _balance;
+
 		shares.increaseShares(to, _missingShares);
 		_update();
 	}
@@ -112,8 +110,8 @@ contract SyStBTCH70StrategyPriceProvider is Ownable, AggregatorV3LightInterface 
 	function decreaseShares(uint256 _balance, uint256 _amount) external onlyOwner {
 		uint256 _removalSharesRatio = (_amount * 1 ether) / (_balance + _amount);
 		uint256 _missingShares = (shares.totalSupply() * _removalSharesRatio) / 1 ether;
-
 		equityBalance = _balance;
+
 		shares.decreaseShares(msg.sender, _missingShares);
 		_update();
 	}
