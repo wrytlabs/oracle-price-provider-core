@@ -98,8 +98,9 @@ contract SyStBTCH70StrategyPriceProvider is Ownable, AggregatorV3LightInterface 
 	}
 
 	function increaseShares(address to, uint256 _balance, uint256 _amount) external onlyOwner {
+		uint256 _totalSupply = shares.totalSupply();
 		uint256 _existingSharesRatio = 1 ether - (_amount * 1 ether) / _balance;
-		uint256 _missingShares = shares.totalSupply() * (1 ether / _existingSharesRatio - 1);
+		uint256 _missingShares = (_totalSupply * 1 ether) / _existingSharesRatio - _totalSupply;
 		equityBalance = _balance;
 
 		shares.increaseShares(to, _missingShares);
