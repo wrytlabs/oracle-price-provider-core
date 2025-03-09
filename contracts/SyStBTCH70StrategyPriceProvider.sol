@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {AggregatorV3LightInterface} from './interfaces/AggregatorV3LightInterface.sol';
 
@@ -109,10 +108,10 @@ contract SyStBTCH70StrategyPriceProvider is Ownable, AggregatorV3LightInterface 
 
 	function decreaseShares(uint256 _balance, uint256 _amount) external onlyOwner {
 		uint256 _removalSharesRatio = (_amount * 1 ether) / (_balance + _amount);
-		uint256 _missingShares = (shares.totalSupply() * _removalSharesRatio) / 1 ether;
+		uint256 _burningShares = (shares.totalSupply() * _removalSharesRatio) / 1 ether;
 		equityBalance = _balance;
 
-		shares.decreaseShares(msg.sender, _missingShares);
+		shares.decreaseShares(msg.sender, _burningShares);
 		_update();
 	}
 
