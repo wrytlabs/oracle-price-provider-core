@@ -18,6 +18,9 @@ export type ChainAddressMainnet = {
 	// identifier
 	chainId: typeof mainnet.id;
 	chainSelector: string;
+
+	// proxy price adapters
+	IFALCSUSDFProxyPriceAdapter: Address;
 };
 
 export type ChainAddressPolygon = {

@@ -3,8 +3,8 @@ import { storeConstructorArgs } from '../../helper/store.args';
 import { Address } from 'viem';
 
 // config and select
-export const NAME: string = 'IFALCUSDCProxyPriceAdapter'; // <-- select smart contract
-export const FILE: string = 'IFALCUSDCProxyPriceAdapter'; // <-- name exported file
+export const NAME: string = 'IFALCSUSDFProxyPriceAdapter'; // <-- select smart contract
+export const FILE: string = 'IFALCSUSDFProxyPriceAdapter'; // <-- name exported file
 export const MOD: string = NAME + 'Module';
 console.log(NAME);
 

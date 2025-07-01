@@ -9,19 +9,19 @@ interface IProxy {
 	function decimals() external view returns (uint8);
 }
 
-contract IFALCUSDCProxyPriceAdapter is AggregatorV3LightInterface {
+contract IFALCSUSDFProxyPriceAdapter is AggregatorV3LightInterface {
 	IProxy public immutable proxy;
 
 	constructor(address _proxy) {
 		proxy = IProxy(_proxy);
 	}
 
-	function decimals() external view override returns (uint8) {
-		return proxy.decimals();
+	function decimals() external pure override returns (uint8) {
+		return 18;
 	}
 
 	function description() external pure override returns (string memory) {
-		return 'iFALC/USDC proxy price oracle';
+		return 'iFALC/sUSDf proxy price oracle';
 	}
 
 	function latestRoundData()

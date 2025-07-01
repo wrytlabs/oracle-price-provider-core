@@ -147,6 +147,8 @@ const config: HardhatUserConfig = {
 	etherscan: {
 		// apiKey: etherscan,
 		apiKey: {
+			// @ts-ignore
+			mainnet: etherscan,
 			tenderly: '',
 			citrea: 'your API key',
 		},

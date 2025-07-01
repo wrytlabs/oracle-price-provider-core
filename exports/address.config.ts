@@ -6,6 +6,9 @@ export const ADDRESS: ChainAddressMap = {
 		// identifier
 		chainId: 1,
 		chainSelector: '5009297550715157269',
+
+		// proxy price adapterss
+		IFALCSUSDFProxyPriceAdapter: '0x50FAE3C51A00A46bc2bBceB7390c28CAa6794A1c',
 	},
 	[polygon.id]: {
 		// identifier
